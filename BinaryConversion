@@ -1,0 +1,146 @@
+import java.util.Random;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
+public class BinaryConversion {
+    public static void main(String[] args)
+    {
+
+        JFrame frame = new JFrame("Sample Binary Table");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 300);
+
+        String[] columnNames = {"Serial", "Decimal Number", "Binary Number"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0); // Create an empty table model
+
+        // Generate 50 random floating-point numbers
+        Random random = new Random();
+        float[] numbers = new float[50];
+        for (int i = 0; i < 50; i++) {
+            numbers[i] = random.nextFloat() * 1000;
+        }
+
+        // Convert the numbers to binary
+        String[] binaries = new String[50];
+        for (int i = 0; i < 50; i++) {
+            //binaries[i] = Float.toBinaryString(numbers[i]);
+            binaries[i] = floatToBinary(numbers[i]);
+        }
+
+        // Print the results
+        for (int i = 0; i < 50; i++) {
+            //boolean isExact = isExactBinaryRepresentation(binaries[i]);
+            //System.out.println(numbers[i] + " = " + binaries[i]);
+            System.out.println(numbers[i] + " = " + decimalToBinary(new BigDecimal(numbers[i])));
+            Object[] theColumns = {i +1, numbers[i],decimalToBinary(new BigDecimal(numbers[i])),"" };
+            model.addRow(theColumns);
+
+        }
+        //System.out.println( "----");
+        //Float.
+        //System.out.println(decimalToBinary(new BigDecimal("11.81")));
+        //System.out.println( "11.81 = " + floatToBinary(11.11181790876554));
+
+        JTable table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+        frame.add(scrollPane);
+        frame.setVisible(true);
+    }
+
+    public static String floatToBinary(float value) {
+//        int bits = Float.floatToRawIntBits(value);
+//        String binaryString = Integer.toBinaryString(bits);
+//        return binaryString;
+
+        // Convert the float number to binary
+//        int bits = Float.floatToRawIntBits(value);
+//        String binaryString = Integer.toBinaryString(bits);
+//
+//        int exponent = ((bits >> 23) & 0xFF) - 127;
+//        int fraction = bits & 0x007FFFFF;
+//
+//        StringBuilder result = new StringBuilder();
+//        if (binaryString.charAt(0) == '1') {
+//            result.append('-');
+//        }
+//        result.append("1.");
+//        for (int i = 0; i < 23; i++) {
+//            result.append((fraction & 0x00800000) == 0 ? '0' : '1');
+//            fraction <<= 1;
+//        }
+//
+//        return result.toString();
+
+
+        int intPart = (int) value;
+        float fractionalPart = value - intPart;
+
+        StringBuilder binaryStringBuilder = new StringBuilder();
+
+        // Convert integer part to binary
+        binaryStringBuilder.append(Integer.toBinaryString(intPart));
+        binaryStringBuilder.append('.');
+
+        // Convert fractional part to binary
+        for (int i = 0; i < 23; i++) {
+            fractionalPart *= 2;
+            binaryStringBuilder.append((int) fractionalPart);
+            fractionalPart -= (int) fractionalPart;
+        }
+
+        return binaryStringBuilder.toString();
+    }
+
+    public static boolean isExactBinaryRepresentation(float num) {
+        int floatBits = Float.floatToIntBits(num);
+        float reconstructedFloat = Float.intBitsToFloat(floatBits);
+        return reconstructedFloat == num;
+    }
+
+
+
+    private static String decimalToBinary(BigDecimal decimal) {
+        return decimalToBinary(decimal, 50);
+    }
+
+    private static String decimalToBinary(BigDecimal decimal, int digits) {
+        BigDecimal integer = decimal.setScale(0, RoundingMode.FLOOR);
+        BigDecimal fractional = decimal.subtract(integer);
+
+        StringBuilder sb = new StringBuilder();
+
+        //  Integer part
+        BigDecimal two = BigDecimal.valueOf(2);
+        BigDecimal zero = BigDecimal.ZERO;
+        while ( integer.compareTo(zero) > 0 ) {
+            BigDecimal[] result = integer.divideAndRemainder(two);
+            sb.append(result[1]);
+            integer = result[0];
+        }
+        sb.reverse();
+
+        //  Fractional part
+        int count = 0;
+        if ( fractional.compareTo(zero) != 0 ) {
+            sb.append(".");
+        }
+        while ( fractional.compareTo(zero) != 0 ) {
+            count++;
+            fractional = fractional.multiply(two);
+            sb.append(fractional.setScale(0, RoundingMode.FLOOR));
+            if ( fractional.compareTo(BigDecimal.ONE) >= 0 ) {
+                fractional = fractional.subtract(BigDecimal.ONE);
+            }
+            if ( count >= digits ) {
+                break;
+            }
+        }
+
+        return sb.toString();
+    }
+
+}
